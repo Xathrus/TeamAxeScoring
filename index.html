@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WATL Team Axe Throwing Scorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+        .team-active {
+            box-shadow: 0 0 20px 5px rgba(250, 204, 21, 0.6); /* yellow-400 glow */
+            border-color: rgba(250, 204, 21, 0.9) !important;
+        }
+        .scoring-btn {
+            transition: all 0.15s ease-out;
+        }
+        .scoring-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+        .scoring-btn:active {
+            transform: translateY(0px);
+            filter: brightness(0.9);
+        }
+        .editable-score {
+            cursor: pointer;
+            position: relative;
+        }
+        .editable-score:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .editable-score:hover::after {
+            content: '✎';
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            color: #facc15; /* yellow-400 */
+        }
+        .log-header {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white antialiased">
+
+    <div id="main-app" class="container mx-auto p-4 max-w-7xl hidden">
+
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Team Axe Throwing Scorer</h1>
+            <p class="text-gray-400 mt-1">Best 2 of 3 Rounds</p>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col xl:flex-row gap-8">
+
+            <!-- Left Panel: Scoreboards & Status -->
+            <div class="xl:w-1/2 space-y-6">
+                <!-- Team Scorecards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Team 1 Card -->
+                    <div id="team1-card" class="bg-gray-800 p-4 rounded-lg border-2 border-blue-500/50 transition-all duration-300">
+                        <h2 id="team1-name-display" class="text-2xl font-bold text-blue-400 text-center mb-3">Team 1</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-lg font-semibold">Round Wins</span>
+                            <span id="team1-round-wins" class="text-3xl font-black">0</span>
+                        </div>
+                        <div id="team1-round-scores" class="space-y-2 border-t border-gray-700 pt-3">
+                            <!-- Round scores will be generated here -->
+                        </div>
+                    </div>
+                    <!-- Team 2 Card -->
+                    <div id="team2-card" class="bg-gray-800 p-4 rounded-lg border-2 border-red-500/50 transition-all duration-300">
+                        <h2 id="team2-name-display" class="text-2xl font-bold text-red-400 text-center mb-3">Team 2</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-lg font-semibold">Round Wins</span>
+                            <span id="team2-round-wins" class="text-3xl font-black">0</span>
+                        </div>
+                         <div id="team2-round-scores" class="space-y-2 border-t border-gray-700 pt-3">
+                            <!-- Round scores will be generated here -->
+                        </div>
+                    </div>
+                </div>
+                 <!-- Game Status -->
+                <div class="bg-gray-800 p-4 rounded-lg text-center">
+                    <h3 class="text-lg font-semibold" id="match-status">Round 1, Match 1</h3>
+                    <p id="player-turn-status" class="text-xl font-bold mt-1">Player 1A's Turn</p>
+                    <p id="throw-status" class="text-gray-300 mt-1">Throw 1 of 10</p>
+                    <p id="killshot-status" class="text-sm text-gray-300 mt-2 font-semibold">Killshots: 0 / 2</p>
+                </div>
+            </div>
+
+            <!-- Right Panel: Scoring Controls & Active Log -->
+            <div class="xl:w-1/2 flex flex-col gap-6">
+                <div id="scoring-controls" class="bg-gray-800 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-center mb-4">Enter Score</h3>
+                    <!-- Standard Scoring -->
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <button data-score="6" class="scoring-btn bg-red-600 hover:bg-red-500 text-white font-black text-2xl py-6 rounded-lg">6</button>
+                        <button data-score="5" class="scoring-btn bg-blue-600 hover:bg-blue-500 text-white font-black text-2xl py-6 rounded-lg">5</button>
+                        <button data-score="4" class="scoring-btn bg-gray-600 hover:bg-gray-500 text-white font-black text-2xl py-6 rounded-lg">4</button>
+                        <button data-score="3" class="scoring-btn bg-gray-600 hover:bg-gray-500 text-white font-black text-2xl py-6 rounded-lg">3</button>
+                        <button data-score="2" class="scoring-btn bg-gray-600 hover:bg-gray-500 text-white font-black text-2xl py-6 rounded-lg">2</button>
+                        <button data-score="1" class="scoring-btn bg-gray-600 hover:bg-gray-500 text-white font-black text-2xl py-6 rounded-lg">1</button>
+                    </div>
+                    <!-- Killshot -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                         <button id="killshot-hit-btn" class="w-full scoring-btn bg-green-600 hover:bg-green-500 text-white font-bold text-xl py-4 rounded-lg">Killshot Hit</button>
+                         <button id="killshot-miss-btn" class="w-full scoring-btn bg-yellow-600 hover:bg-yellow-500 text-white font-bold text-xl py-4 rounded-lg">Killshot Miss</button>
+                    </div>
+                    <!-- Misses / Drops -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <button id="zero-btn" class="scoring-btn bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg py-4 rounded-lg">0</button>
+                        <button id="drop-btn" class="scoring-btn bg-red-800 hover:bg-red-700 text-white font-bold text-lg py-4 rounded-lg">Drop</button>
+                        <button id="killshot-drop-btn" class="scoring-btn bg-red-800 hover:bg-red-700 text-white font-bold text-lg py-4 rounded-lg">Killshot Drop</button>
+                    </div>
+                </div>
+                <!-- Active Match Log Goes Here -->
+                <div id="active-log-container"></div>
+            </div>
+        </div>
+
+        <!-- Completed Match Logs -->
+        <div id="logs-container" class="mt-8 space-y-6"></div>
+        
+        <!-- Reset Button -->
+        <div class="mt-6 text-center">
+            <button id="reset-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                New Game
+            </button>
+        </div>
+    </div>
+    
+    <!-- Setup Modal -->
+    <div id="setup-modal" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 md:p-8 text-center max-w-3xl w-full">
+            <h2 class="text-3xl font-black mb-6">Game Setup</h2>
+            <div id="setup-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <!-- Team 1 Setup -->
+                <div class="space-y-4">
+                    <input type="text" id="team1-name-input" placeholder="Team 1 Name" class="w-full bg-gray-700 text-white p-3 rounded-md border-2 border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg">
+                    <input type="text" id="p1a-name-input" placeholder="Player 1A Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" id="p1b-name-input" placeholder="Player 1B Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" id="p1c-name-input" placeholder="Player 1C Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <!-- Team 2 Setup -->
+                <div class="space-y-4">
+                    <input type="text" id="team2-name-input" placeholder="Team 2 Name" class="w-full bg-gray-700 text-white p-3 rounded-md border-2 border-red-500/50 focus:outline-none focus:ring-2 focus:ring-red-400 text-lg">
+                    <input type="text" id="p2a-name-input" placeholder="Player 2A Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <input type="text" id="p2b-name-input" placeholder="Player 2B Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <input type="text" id="p2c-name-input" placeholder="Player 2C Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                </div>
+            </div>
+            <button id="start-game-btn" class="mt-8 w-full md:w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg">
+                Start Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Winner Modal -->
+    <div id="winner-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 text-center max-w-sm w-full">
+            <h2 class="text-3xl font-black mb-4" id="winner-text"></h2>
+            <p class="text-lg mb-2" id="series-score-text"></p>
+            <p class="text-lg mb-2">Final Total Score</p>
+            <p class="text-2xl font-bold mb-6" id="final-score-text"></p>
+            <div class="space-y-3">
+                 <button id="export-csv-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg">
+                    Export CSV
+                </button>
+                 <button id="close-winner-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg">
+                    Close
+                </button>
+                <button id="play-again-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg">
+                    Play Again
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Score Modal -->
+    <div id="edit-score-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 text-center max-w-md w-full">
+            <h2 class="text-2xl font-black mb-2">Edit Score</h2>
+            <p id="edit-score-info" class="text-gray-300 mb-4">Info</p>
+            <div id="edit-scoring-controls">
+                <!-- Scoring buttons will be cloned here by JS -->
+            </div>
+            <button id="cancel-edit-btn" class="mt-4 w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Game State ---
+        let state = {};
+
+        function createEmptyRoundData() {
+            const roundData = { 1: {}, 2: {} };
+            for(let t=1; t<=2; t++) {
+                for(let p=1; p<=3; p++) {
+                    roundData[t][p] = [];
+                }
+            }
+            return roundData;
+        }
+
+        function initializeState() {
+            state = {
+                names: { team1: 'Team 1', team2: 'Team 2', players: { 1: {}, 2: {} } },
+                currentRound: 1,
+                currentMatchInRound: 1,
+                currentPlayerInPair: 1,
+                throwInMatch: 1,
+                throws: { 1: createEmptyRoundData(), 2: createEmptyRoundData(), 3: createEmptyRoundData() },
+                roundWinners: [],
+                editingThrow: null,
+                gameOver: false
+            };
+        }
+        
+        // --- DOM Elements ---
+        const mainApp = document.getElementById('main-app');
+        const setupModal = document.getElementById('setup-modal');
+        const winnerModal = document.getElementById('winner-modal');
+        const editScoreModal = document.getElementById('edit-score-modal');
+        const logsContainer = document.getElementById('logs-container');
+        const activeLogContainer = document.getElementById('active-log-container');
+        const scoringControls = document.getElementById('scoring-controls');
+        const editScoringControls = document.getElementById('edit-scoring-controls');
+
+        // --- Game Flow ---
+        function startGame() {
+            initializeState();
+            captureNames();
+            setupModal.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            createLogTables();
+            updateUI();
+        }
+        
+        function recordThrow(score, type) {
+            if (state.gameOver) return;
+            const round = state.currentRound;
+            const team = state.currentPlayerInPair;
+            const player = state.currentMatchInRound;
+            
+            if ((type === 'killshotHit' || type === 'killshotMiss' || type === 'killshotDrop')) {
+                const used = getUsedKillshots(round, team, player);
+                const available = getAvailableKillshots(round, team, player);
+                if (used >= available) {
+                    alert("This player has no Killshot attempts remaining for this match.");
+                    return;
+                }
+            }
+            
+            state.throws[round][team][player].push({ score, type });
+            nextTurn();
+        }
+
+        function nextTurn() {
+            // Switch player in pair
+            if (state.currentPlayerInPair === 1) {
+                state.currentPlayerInPair = 2;
+            } else {
+                state.currentPlayerInPair = 1;
+                state.throwInMatch++;
+            }
+
+            // Check if the current match is over
+            if (state.throwInMatch > 10) {
+                state.currentMatchInRound++;
+                state.throwInMatch = 1;
+
+                // Check if the current ROUND is over
+                if (state.currentMatchInRound > 3) {
+                    calculateRoundWinner();
+                    
+                    const t1RoundWins = state.roundWinners.filter(w => w === 1).length;
+                    const t2RoundWins = state.roundWinners.filter(w => w === 2).length;
+
+                    if (t1RoundWins === 2 || t2RoundWins === 2) {
+                        endGame();
+                        return;
+                    }
+
+                    // If no winner, start next round
+                    state.currentRound++;
+                    state.currentMatchInRound = 1;
+
+                    if (state.currentRound > 3) {
+                        endGame(); // Should not happen if best of 3 logic is right, but a safeguard
+                        return;
+                    }
+                }
+            }
+            updateUI();
+        }
+
+        function calculateRoundWinner(roundNum = state.currentRound) {
+            let round1Total = 0;
+            let round2Total = 0;
+            for (let p = 1; p <= 3; p++) {
+                round1Total += state.throws[roundNum][1][p].reduce((total, t) => total + t.score, 0);
+                round2Total += state.throws[roundNum][2][p].reduce((total, t) => total + t.score, 0);
+            }
+
+            if (state.roundWinners.length < roundNum) {
+                if (round1Total > round2Total) state.roundWinners.push(1);
+                else if (round2Total > round1Total) state.roundWinners.push(2);
+                else state.roundWinners.push(0); // Tie
+            }
+        }
+        
+        function endGame() {
+            state.gameOver = true;
+            updateUI();
+            
+            const t1Wins = state.roundWinners.filter(w => w === 1).length;
+            const t2Wins = state.roundWinners.filter(w => w === 2).length;
+            const t1Total = calculateGrandTotal(1);
+            const t2Total = calculateGrandTotal(2);
+
+            const winnerTextEl = document.getElementById('winner-text');
+            if (t1Wins > t2Wins) {
+                winnerTextEl.textContent = `${state.names.team1} Wins!`;
+                winnerTextEl.className = 'text-3xl font-black mb-4 text-blue-400';
+            } else if (t2Wins > t1Wins) {
+                winnerTextEl.textContent = `${state.names.team2} Wins!`;
+                winnerTextEl.className = 'text-3xl font-black mb-4 text-red-400';
+            } else {
+                winnerTextEl.textContent = "It's a Tie Series!";
+                winnerTextEl.className = 'text-3xl font-black mb-4 text-yellow-400';
+            }
+            
+            document.getElementById('series-score-text').textContent = `Series Score: ${t1Wins} - ${t2Wins}`;
+            document.getElementById('final-score-text').textContent = `${t1Total} - ${t2Total}`;
+            winnerModal.classList.remove('hidden');
+        }
+
+        function resetGame() {
+            mainApp.classList.add('hidden');
+            winnerModal.classList.add('hidden');
+            setupModal.classList.remove('hidden');
+            logsContainer.innerHTML = '';
+            activeLogContainer.innerHTML = '';
+        }
+
+        // --- Score Editing ---
+        function openEditModal(round, team, player, throwIndex) {
+            state.editingThrow = { round, team, player, throwIndex };
+            const playerName = state.names.players[team][player];
+            document.getElementById('edit-score-info').textContent = `Editing ${playerName}'s Throw #${throwIndex + 1} (Round ${round})`;
+            editScoreModal.classList.remove('hidden');
+        }
+
+        function commitScoreEdit(newScore, type) {
+            if (!state.editingThrow) return;
+            const { round, team, player, throwIndex } = state.editingThrow;
+            
+            // Temporarily remove the throw to check killshot availability accurately
+            const originalThrow = state.throws[round][team][player][throwIndex];
+            state.throws[round][team][player][throwIndex] = null; 
+
+            if ((type === 'killshotHit' || type === 'killshotMiss' || type === 'killshotDrop')) {
+                const used = getUsedKillshots(round, team, player);
+                const available = getAvailableKillshots(round, team, player);
+                if (used >= available) {
+                    alert("Cannot change to Killshot, player has no attempts available.");
+                    state.throws[round][team][player][throwIndex] = originalThrow; // Restore original
+                    return;
+                }
+            }
+
+            state.throws[round][team][player][throwIndex] = { score: newScore, type };
+
+            state.editingThrow = null;
+            editScoreModal.classList.add('hidden');
+            recalculateSeries();
+            updateUI();
+        }
+        
+        function recalculateSeries() {
+            state.roundWinners = [];
+            for(let r=1; r <= state.currentRound; r++) {
+                 const roundComplete = state.throws[r] && state.throws[r][1][3].length === 10 && state.throws[r][2][3].length === 10;
+                 if(roundComplete) {
+                    calculateRoundWinner(r);
+                 }
+            }
+        }
+
+        // --- UI Update Functions ---
+        function updateUI() {
+            updateScores();
+            updateStatus();
+            updateActivePlayerHighlight();
+            updateKillshotButtons();
+            updateLog();
+            updateLogHeaders();
+            moveActiveLog();
+        }
+
+        function captureNames() {
+            state.names.team1 = document.getElementById('team1-name-input').value || 'Team 1';
+            state.names.team2 = document.getElementById('team2-name-input').value || 'Team 2';
+            for (let t=1; t<=2; t++) {
+                for (let p=1; p<=3; p++) {
+                    const pLetter = String.fromCharCode(96 + p);
+                    state.names.players[t][p] = document.getElementById(`p${t}${pLetter}-name-input`).value || `Player ${t}${String.fromCharCode(64 + p)}`;
+                }
+            }
+        }
+        
+        function updateScores() {
+            document.getElementById('team1-name-display').textContent = state.names.team1;
+            document.getElementById('team2-name-display').textContent = state.names.team2;
+
+            const team1RoundScoresEl = document.getElementById('team1-round-scores');
+            const team2RoundScoresEl = document.getElementById('team2-round-scores');
+            team1RoundScoresEl.innerHTML = '';
+            team2RoundScoresEl.innerHTML = '';
+            
+            for (let r = 1; r <= 3; r++) {
+                if (r > state.currentRound && !state.gameOver) continue;
+                if (!state.throws[r]) continue;
+
+                let team1RoundTotal = 0;
+                let team2RoundTotal = 0;
+                for (let p = 1; p <= 3; p++) {
+                    team1RoundTotal += state.throws[r][1][p].reduce((total, t) => total + t.score, 0);
+                    team2RoundTotal += state.throws[r][2][p].reduce((total, t) => total + t.score, 0);
+                }
+                
+                const roundComplete = state.roundWinners.length >= r;
+                let t1Color = 'text-gray-400';
+                let t2Color = 'text-gray-400';
+                if (roundComplete) {
+                    if (state.roundWinners[r-1] === 1) t1Color = 'text-green-400 font-bold';
+                    if (state.roundWinners[r-1] === 2) t2Color = 'text-green-400 font-bold';
+                }
+
+                team1RoundScoresEl.innerHTML += `
+                    <div class="flex justify-between items-center text-lg">
+                        <span class="text-gray-300">Round ${r} Score</span>
+                        <span class="${t1Color}">${team1RoundTotal}</span>
+                    </div>`;
+                team2RoundScoresEl.innerHTML += `
+                    <div class="flex justify-between items-center text-lg">
+                        <span class="text-gray-300">Round ${r} Score</span>
+                        <span class="${t2Color}">${team2RoundTotal}</span>
+                    </div>`;
+            }
+
+            document.getElementById('team1-round-wins').textContent = state.roundWinners.filter(w => w === 1).length;
+            document.getElementById('team2-round-wins').textContent = state.roundWinners.filter(w => w === 2).length;
+        }
+
+        function updateStatus() {
+            if (state.gameOver) {
+                document.getElementById('match-status').textContent = 'Game Over';
+                document.getElementById('player-turn-status').textContent = 'Final Scores Calculated';
+                document.getElementById('throw-status').textContent = '';
+                document.getElementById('killshot-status').textContent = '';
+                return;
+            }
+            const team = state.currentPlayerInPair;
+            const playerIndex = state.currentMatchInRound;
+            const playerName = state.names.players[team][playerIndex];
+
+            document.getElementById('match-status').textContent = `Round ${state.currentRound}, Match ${state.currentMatchInRound}`;
+            document.getElementById('player-turn-status').textContent = `${playerName}'s Turn`;
+            document.getElementById('throw-status').textContent = `Throw ${state.throwInMatch} of 10`;
+
+            const used = getUsedKillshots(state.currentRound, team, playerIndex);
+            const available = getAvailableKillshots(state.currentRound, team, playerIndex);
+            document.getElementById('killshot-status').textContent = `Killshots: ${used} / ${available}`;
+        }
+
+        function updateActivePlayerHighlight() {
+            const team1Card = document.getElementById('team1-card');
+            const team2Card = document.getElementById('team2-card');
+            team1Card.classList.remove('team-active');
+            team2Card.classList.remove('team-active');
+
+            if (!state.gameOver) {
+                if (state.currentPlayerInPair === 1) {
+                    team1Card.classList.add('team-active');
+                } else {
+                    team2Card.classList.add('team-active');
+                }
+            }
+        }
+
+        function updateKillshotButtons() {
+            const controls = document.getElementById('scoring-controls');
+            if (state.gameOver) {
+                controls.querySelectorAll('button').forEach(b => b.disabled = true);
+                controls.classList.add('opacity-50');
+                return;
+            }
+            controls.classList.remove('opacity-50');
+            controls.querySelectorAll('button').forEach(b => b.disabled = false);
+
+            const round = state.currentRound;
+            const team = state.currentPlayerInPair;
+            const player = state.currentMatchInRound;
+            const used = getUsedKillshots(round, team, player);
+            const available = getAvailableKillshots(round, team, player);
+            
+            const disabled = used >= available;
+            document.getElementById('killshot-hit-btn').disabled = disabled;
+            document.getElementById('killshot-miss-btn').disabled = disabled;
+            document.getElementById('killshot-drop-btn').disabled = disabled;
+
+            if (disabled) {
+                document.getElementById('killshot-hit-btn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('killshot-miss-btn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('killshot-drop-btn').classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                document.getElementById('killshot-hit-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('killshot-miss-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('killshot-drop-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        function createLogTables() {
+            logsContainer.innerHTML = '';
+            for (let r = 1; r <= 3; r++) {
+                const roundContainer = document.createElement('div');
+                roundContainer.id = `round-log-container-${r}`;
+                roundContainer.className = 'hidden';
+                roundContainer.innerHTML = `<h2 class="text-2xl font-bold text-center text-yellow-400 mb-4 border-b-2 border-yellow-400/50 pb-2">Round ${r}</h2>`;
+                const matchesContainer = document.createElement('div');
+                matchesContainer.className = 'space-y-6';
+
+                for (let m = 1; m <= 3; m++) {
+                    const p1Name = state.names.players[1][m];
+                    const p2Name = state.names.players[2][m];
+                    matchesContainer.innerHTML += `
+                        <div id="log-container-${r}-${m}" class="bg-gray-800 rounded-lg p-4">
+                            <div class="log-header flex justify-between items-center mb-4" data-log-id="${r}-${m}">
+                                <div>
+                                    <h3 class="text-xl font-bold">Match ${m} (${p1Name} vs ${p2Name})</h3>
+                                    <p id="match-total-${r}-${m}" class="text-sm text-gray-400 font-semibold"></p>
+                                </div>
+                                <button class="text-xs bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded self-start">Minimize</button>
+                            </div>
+                            <div class="log-content overflow-x-auto">
+                                <table class="w-full text-center">
+                                    <thead><tr class="border-b border-gray-600"><th class="py-2 px-1">Throw</th><th class="py-2 px-1 text-blue-400">${p1Name}</th><th class="py-2 px-1 text-red-400">${p2Name}</th></tr></thead>
+                                    <tbody id="log-body-${r}-${m}"></tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                }
+                roundContainer.appendChild(matchesContainer);
+                logsContainer.appendChild(roundContainer);
+            }
+        }
+
+        function updateLog() {
+            for (let r = 1; r <= 3; r++) {
+                const roundLogContainer = document.getElementById(`round-log-container-${r}`);
+                if (r <= state.currentRound || state.gameOver) {
+                    roundLogContainer.classList.remove('hidden');
+                } else {
+                    roundLogContainer.classList.add('hidden');
+                }
+
+                for (let m = 1; m <= 3; m++) {
+                    const logBody = document.getElementById(`log-body-${r}-${m}`);
+                    if (!logBody) continue;
+                    logBody.innerHTML = '';
+
+                    for (let i = 0; i < 10; i++) {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-gray-700 last:border-b-0 h-10';
+                        const p1Throw = state.throws[r][1][m][i];
+                        const p2Throw = state.throws[r][2][m][i];
+                        row.innerHTML = `
+                            <td class="py-2 px-1 font-bold">${i + 1}</td>
+                            <td class="py-2 px-1 text-lg editable-score" data-round="${r}" data-team="1" data-player="${m}" data-throw-index="${i}">${formatScore(p1Throw)}</td>
+                            <td class="py-2 px-1 text-lg editable-score" data-round="${r}" data-team="2" data-player="${m}" data-throw-index="${i}">${formatScore(p2Throw)}</td>
+                        `;
+                        logBody.appendChild(row);
+                    }
+                }
+            }
+        }
+        
+        function updateLogHeaders() { 
+            for (let r = 1; r <= 3; r++) {
+                for (let m = 1; m <= 3; m++) {
+                    const matchTotalEl = document.getElementById(`match-total-${r}-${m}`);
+                    if(!matchTotalEl) continue;
+
+                    const p1Total = state.throws[r][1][m].reduce((total, t) => total + t.score, 0);
+                    const p2Total = state.throws[r][2][m].reduce((total, t) => total + t.score, 0);
+
+                    if (state.throws[r][1][m].length > 0 || state.throws[r][2][m].length > 0) {
+                        matchTotalEl.textContent = `Match Total: ${p1Total} - ${p2Total}`;
+                    } else {
+                        matchTotalEl.textContent = '';
+                    }
+                }
+            }
+        }
+
+        function moveActiveLog() {
+            // Return any logs from active container to main container
+            Array.from(activeLogContainer.children).forEach(child => {
+                const [r, m] = child.id.split('-').slice(2);
+                document.querySelector(`#round-log-container-${r} > .space-y-6`).appendChild(child);
+            });
+            activeLogContainer.innerHTML = '';
+
+            if (state.gameOver) return;
+
+            // Move the current match log to the active container
+            const round = state.currentRound;
+            const match = state.currentMatchInRound;
+            const activeLog = document.getElementById(`log-container-${round}-${match}`);
+            if (activeLog) {
+                activeLogContainer.appendChild(activeLog);
+            }
+        }
+
+        // --- Utility Functions ---
+        function getDrops(round, team, player) {
+            if (!state.throws[round] || !state.throws[round][team] || !state.throws[round][team][player]) return 0;
+            return state.throws[round][team][player].filter(t => t && (t.type === 'drop')).length;
+        }
+
+        function getAvailableKillshots(round, team, player) {
+            return 2 + getDrops(round, team, player);
+        }
+
+        function getUsedKillshots(round, team, player) {
+            if (!state.throws[round] || !state.throws[round][team] || !state.throws[round][team][player]) return 0;
+            return state.throws[round][team][player].filter(t => t && (t.type === 'killshotHit' || t.type === 'killshotMiss' || t.type === 'killshotDrop')).length;
+        }
+
+        function calculateGrandTotal(teamNum) {
+            let total = 0;
+            for(let r=1; r<=3; r++){
+                if (!state.throws[r]) continue;
+                for (let p = 1; p <= 3; p++) {
+                    total += state.throws[r][teamNum][p].reduce((acc, t) => acc + t.score, 0);
+                }
+            }
+            return total;
+        }
+
+        function formatScore(throwObj) {
+            if (!throwObj) return '-';
+            switch(throwObj.type) {
+                case 'standard': return throwObj.score;
+                case 'killshotHit': return `<span class="text-green-400 font-bold">8</span>`;
+                case 'killshotMiss': return `<span class="text-yellow-400 font-bold">K-Miss</span>`;
+                case 'killshotDrop': return `<span class="text-red-500 font-bold">K-Drop</span>`;
+                case 'drop': return `<span class="text-red-500">Drop</span>`;
+                case 'zero': return `<span class="text-red-500">0</span>`;
+                default: return '-';
+            }
+        }
+
+        function exportToCSV() {
+            const csvContent = [];
+            const headers = ['Game', 'Set', 'Thrower', 'Team', 'Throw 1', 'Throw 2', 'Throw 3', 'Throw 4', 'Throw 5', 'Throw 6', 'Throw 7', 'Throw 8', 'Throw 9', 'Throw 10'];
+            csvContent.push(headers);
+
+            for (let r = 1; r <= state.currentRound; r++) {
+                if (!state.throws[r]) continue;
+                for (let m = 1; m <= 3; m++) {
+                    // Team 1 Player's Row
+                    const p1Throws = state.throws[r][1][m];
+                    if (p1Throws.length > 0) {
+                        const p1Name = state.names.players[1][m];
+                        const t1Name = state.names.team1;
+                        const p1Scores = p1Throws.map(t => t.score);
+                        while (p1Scores.length < 10) { p1Scores.push(''); }
+                        const p1Row = [r, m, `"${p1Name}"`, `"${t1Name}"`, ...p1Scores];
+                        csvContent.push(p1Row);
+                    }
+
+                    // Team 2 Player's Row
+                    const p2Throws = state.throws[r][2][m];
+                    if (p2Throws.length > 0) {
+                        const p2Name = state.names.players[2][m];
+                        const t2Name = state.names.team2;
+                        const p2Scores = p2Throws.map(t => t.score);
+                        while (p2Scores.length < 10) { p2Scores.push(''); }
+                        const p2Row = [r, m, `"${p2Name}"`, `"${t2Name}"`, ...p2Scores];
+                        csvContent.push(p2Row);
+                    }
+                }
+            }
+
+            let csvString = csvContent.map(e => e.join(",")).join("\n");
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            const teamNames = `${state.names.team1.replace(/ /g,"_")}_vs_${state.names.team2.replace(/ /g,"_")}`;
+            const date = new Date().toISOString().slice(0, 10);
+            link.setAttribute("download", `AxeThrowingOutput_${teamNames}_${date}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('start-game-btn').addEventListener('click', startGame);
+        document.getElementById('reset-btn').addEventListener('click', resetGame);
+        document.getElementById('play-again-btn').addEventListener('click', resetGame);
+        document.getElementById('close-winner-btn').addEventListener('click', () => winnerModal.classList.add('hidden'));
+        document.getElementById('export-csv-btn').addEventListener('click', exportToCSV);
+        document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+            state.editingThrow = null;
+            editScoreModal.classList.add('hidden');
+        });
+
+        scoringControls.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (!button || button.disabled) return;
+            
+            if (button.matches('[data-score]')) recordThrow(parseInt(button.dataset.score, 10), 'standard');
+            else if (button.id === 'killshot-hit-btn') recordThrow(8, 'killshotHit');
+            else if (button.id === 'killshot-miss-btn') recordThrow(0, 'killshotMiss');
+            else if (button.id === 'zero-btn') recordThrow(0, 'zero');
+            else if (button.id === 'drop-btn') recordThrow(0, 'drop');
+            else if (button.id === 'killshot-drop-btn') recordThrow(0, 'killshotDrop');
+        });
+
+        editScoringControls.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            if (button.matches('[data-score]')) commitScoreEdit(parseInt(button.dataset.score, 10), 'standard');
+            else if (button.id.includes('killshot-hit-btn')) commitScoreEdit(8, 'killshotHit');
+            else if (button.id.includes('killshot-miss-btn')) commitScoreEdit(0, 'killshotMiss');
+            else if (button.id.includes('zero-btn')) commitScoreEdit(0, 'zero');
+            else if (button.id.includes('drop-btn')) commitScoreEdit(0, 'drop');
+            else if (button.id.includes('killshot-drop-btn')) commitScoreEdit(0, 'killshotDrop');
+        });
+
+        logsContainer.addEventListener('click', (e) => {
+            const cell = e.target.closest('.editable-score');
+            if (cell && cell.textContent !== '-') {
+                const { round, team, player, throwIndex } = cell.dataset;
+                openEditModal(parseInt(round), parseInt(team), parseInt(player), parseInt(throwIndex));
+                return;
+            }
+            
+            const header = e.target.closest('.log-header');
+            if(header) {
+                const content = header.nextElementSibling;
+                const button = header.querySelector('button');
+                content.classList.toggle('hidden');
+                button.textContent = content.classList.contains('hidden') ? 'Expand' : 'Minimize';
+            }
+        });
+        
+        // --- Initial Setup ---
+        editScoringControls.innerHTML = scoringControls.innerHTML;
+        editScoringControls.querySelectorAll('button').forEach(btn => btn.id = `edit-${btn.id}`);
+    });
+    </script>
+
+</body>
+</html>
