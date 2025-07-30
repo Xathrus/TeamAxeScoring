@@ -47,6 +47,11 @@
         .log-header {
             cursor: pointer;
         }
+        .player-radio:checked + label {
+            background-color: #3b82f6; /* blue-600 */
+            border-color: #60a5fa; /* blue-400 */
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white antialiased">
@@ -95,6 +100,7 @@
                     <p id="player-turn-status" class="text-xl font-bold mt-1">Player 1A's Turn</p>
                     <p id="throw-status" class="text-gray-300 mt-1">Throw 1 of 10</p>
                     <p id="killshot-status" class="text-sm text-gray-300 mt-2 font-semibold">Killshots: 0 / 2</p>
+                    <p id="lead-indicator" class="text-sm font-bold mt-2 h-5"></p>
                 </div>
             </div>
 
@@ -147,20 +153,46 @@
                 <!-- Team 1 Setup -->
                 <div class="space-y-4">
                     <input type="text" id="team1-name-input" placeholder="Team 1 Name" class="w-full bg-gray-700 text-white p-3 rounded-md border-2 border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg">
-                    <input type="text" id="p1a-name-input" placeholder="Player 1A Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <input type="text" id="p1b-name-input" placeholder="Player 1B Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <input type="text" id="p1c-name-input" placeholder="Player 1C Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" name="team1-player" placeholder="Player 1 Name (Required)" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" name="team1-player" placeholder="Player 2 Name (Required)" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" name="team1-player" placeholder="Player 3 Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" name="team1-player" placeholder="Player 4 Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
                 <!-- Team 2 Setup -->
                 <div class="space-y-4">
                     <input type="text" id="team2-name-input" placeholder="Team 2 Name" class="w-full bg-gray-700 text-white p-3 rounded-md border-2 border-red-500/50 focus:outline-none focus:ring-2 focus:ring-red-400 text-lg">
-                    <input type="text" id="p2a-name-input" placeholder="Player 2A Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    <input type="text" id="p2b-name-input" placeholder="Player 2B Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    <input type="text" id="p2c-name-input" placeholder="Player 2C Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <input type="text" name="team2-player" placeholder="Player 1 Name (Required)" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <input type="text" name="team2-player" placeholder="Player 2 Name (Required)" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <input type="text" name="team2-player" placeholder="Player 3 Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    <input type="text" name="team2-player" placeholder="Player 4 Name" class="w-full bg-gray-700 text-white p-2 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-400">
                 </div>
             </div>
-            <button id="start-game-btn" class="mt-8 w-full md:w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg">
-                Start Game
+            <button id="continue-setup-btn" class="mt-8 w-full md:w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- Match Setup Modal -->
+    <div id="match-setup-modal" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center hidden z-50 p-4">
+         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 md:p-8 text-center max-w-3xl w-full">
+            <h2 id="match-setup-title" class="text-3xl font-black mb-6">Match Setup</h2>
+            <p class="text-gray-300 mb-4">Select one player from each team for this match.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <!-- Team 1 Roster -->
+                <div>
+                    <h3 id="match-setup-team1-name" class="text-xl font-bold text-blue-400 mb-3">Team 1</h3>
+                    <div id="team1-roster-select" class="space-y-2"></div>
+                </div>
+                <!-- Team 2 Roster -->
+                 <div>
+                    <h3 id="match-setup-team2-name" class="text-xl font-bold text-red-400 mb-3">Team 2</h3>
+                    <div id="team2-roster-select" class="space-y-2"></div>
+                </div>
+            </div>
+            <p id="match-setup-validation" class="text-red-400 h-6 mt-4"></p>
+            <button id="start-match-btn" class="mt-4 w-full md:w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg disabled:bg-gray-600 disabled:cursor-not-allowed">
+                Start Match
             </button>
         </div>
     </div>
@@ -206,7 +238,7 @@
         function createEmptyRoundData() {
             const roundData = { 1: {}, 2: {} };
             for(let t=1; t<=2; t++) {
-                for(let p=1; p<=3; p++) {
+                for(let p=0; p<4; p++) { // Support up to 4 players
                     roundData[t][p] = [];
                 }
             }
@@ -215,9 +247,11 @@
 
         function initializeState() {
             state = {
-                names: { team1: 'Team 1', team2: 'Team 2', players: { 1: {}, 2: {} } },
+                names: { team1: 'Team 1', team2: 'Team 2' },
+                roster: { 1: [], 2: [] },
+                roundMatchups: { 1: [], 2: [], 3: [] },
                 currentRound: 1,
-                currentMatchInRound: 1,
+                currentMatchIndex: 0, // Index for roundMatchups array
                 currentPlayerInPair: 1,
                 throwInMatch: 1,
                 throws: { 1: createEmptyRoundData(), 2: createEmptyRoundData(), 3: createEmptyRoundData() },
@@ -230,18 +264,30 @@
         // --- DOM Elements ---
         const mainApp = document.getElementById('main-app');
         const setupModal = document.getElementById('setup-modal');
+        const matchSetupModal = document.getElementById('match-setup-modal');
         const winnerModal = document.getElementById('winner-modal');
         const editScoreModal = document.getElementById('edit-score-modal');
         const logsContainer = document.getElementById('logs-container');
         const activeLogContainer = document.getElementById('active-log-container');
         const scoringControls = document.getElementById('scoring-controls');
         const editScoringControls = document.getElementById('edit-scoring-controls');
+        const leadIndicatorEl = document.getElementById('lead-indicator');
 
         // --- Game Flow ---
-        function startGame() {
+        function setupGame() {
             initializeState();
-            captureNames();
+            captureNamesAndRoster();
+            if (state.roster[1].length < 2 || state.roster[2].length < 2) {
+                alert("Each team must have at least 2 players.");
+                return;
+            }
             setupModal.classList.add('hidden');
+            showMatchSetupModal();
+        }
+
+        function startMatch() {
+            captureCurrentMatchup();
+            matchSetupModal.classList.add('hidden');
             mainApp.classList.remove('hidden');
             createLogTables();
             updateUI();
@@ -251,23 +297,22 @@
             if (state.gameOver) return;
             const round = state.currentRound;
             const team = state.currentPlayerInPair;
-            const player = state.currentMatchInRound;
+            const playerIndex = state.roundMatchups[round][state.currentMatchIndex][`team${team}`];
             
             if ((type === 'killshotHit' || type === 'killshotMiss' || type === 'killshotDrop')) {
-                const used = getUsedKillshots(round, team, player);
-                const available = getAvailableKillshots(round, team, player);
+                const used = getUsedKillshots(round, team, playerIndex);
+                const available = getAvailableKillshots(round, team, playerIndex);
                 if (used >= available) {
                     alert("This player has no Killshot attempts remaining for this match.");
                     return;
                 }
             }
             
-            state.throws[round][team][player].push({ score, type });
+            state.throws[round][team][playerIndex].push({ score, type });
             nextTurn();
         }
 
         function nextTurn() {
-            // Switch player in pair
             if (state.currentPlayerInPair === 1) {
                 state.currentPlayerInPair = 2;
             } else {
@@ -275,13 +320,11 @@
                 state.throwInMatch++;
             }
 
-            // Check if the current match is over
             if (state.throwInMatch > 10) {
-                state.currentMatchInRound++;
+                state.currentMatchIndex++;
                 state.throwInMatch = 1;
 
-                // Check if the current ROUND is over
-                if (state.currentMatchInRound > 3) {
+                if (state.currentMatchIndex >= 3) { // 3 matches per round
                     calculateRoundWinner();
                     
                     const t1RoundWins = state.roundWinners.filter(w => w === 1).length;
@@ -292,15 +335,16 @@
                         return;
                     }
 
-                    // If no winner, start next round
                     state.currentRound++;
-                    state.currentMatchInRound = 1;
+                    state.currentMatchIndex = 0;
 
                     if (state.currentRound > 3) {
-                        endGame(); // Should not happen if best of 3 logic is right, but a safeguard
+                        endGame();
                         return;
                     }
                 }
+                mainApp.classList.add('hidden');
+                showMatchSetupModal();
             }
             updateUI();
         }
@@ -308,20 +352,21 @@
         function calculateRoundWinner(roundNum = state.currentRound) {
             let round1Total = 0;
             let round2Total = 0;
-            for (let p = 1; p <= 3; p++) {
-                round1Total += state.throws[roundNum][1][p].reduce((total, t) => total + t.score, 0);
-                round2Total += state.throws[roundNum][2][p].reduce((total, t) => total + t.score, 0);
-            }
+            state.roundMatchups[roundNum].forEach(matchup => {
+                round1Total += state.throws[roundNum][1][matchup.team1].reduce((total, t) => total + t.score, 0);
+                round2Total += state.throws[roundNum][2][matchup.team2].reduce((total, t) => total + t.score, 0);
+            });
 
             if (state.roundWinners.length < roundNum) {
                 if (round1Total > round2Total) state.roundWinners.push(1);
                 else if (round2Total > round1Total) state.roundWinners.push(2);
-                else state.roundWinners.push(0); // Tie
+                else state.roundWinners.push(0);
             }
         }
         
         function endGame() {
             state.gameOver = true;
+            mainApp.classList.remove('hidden');
             updateUI();
             
             const t1Wins = state.roundWinners.filter(w => w === 1).length;
@@ -349,38 +394,38 @@
         function resetGame() {
             mainApp.classList.add('hidden');
             winnerModal.classList.add('hidden');
+            matchSetupModal.classList.add('hidden');
             setupModal.classList.remove('hidden');
             logsContainer.innerHTML = '';
             activeLogContainer.innerHTML = '';
         }
 
         // --- Score Editing ---
-        function openEditModal(round, team, player, throwIndex) {
-            state.editingThrow = { round, team, player, throwIndex };
-            const playerName = state.names.players[team][player];
+        function openEditModal(round, team, playerIndex, throwIndex) {
+            state.editingThrow = { round, team, playerIndex, throwIndex };
+            const playerName = state.roster[team][playerIndex];
             document.getElementById('edit-score-info').textContent = `Editing ${playerName}'s Throw #${throwIndex + 1} (Round ${round})`;
             editScoreModal.classList.remove('hidden');
         }
 
         function commitScoreEdit(newScore, type) {
             if (!state.editingThrow) return;
-            const { round, team, player, throwIndex } = state.editingThrow;
+            const { round, team, playerIndex, throwIndex } = state.editingThrow;
             
-            // Temporarily remove the throw to check killshot availability accurately
-            const originalThrow = state.throws[round][team][player][throwIndex];
-            state.throws[round][team][player][throwIndex] = null; 
+            const originalThrow = state.throws[round][team][playerIndex][throwIndex];
+            state.throws[round][team][playerIndex][throwIndex] = null; 
 
             if ((type === 'killshotHit' || type === 'killshotMiss' || type === 'killshotDrop')) {
-                const used = getUsedKillshots(round, team, player);
-                const available = getAvailableKillshots(round, team, player);
+                const used = getUsedKillshots(round, team, playerIndex);
+                const available = getAvailableKillshots(round, team, playerIndex);
                 if (used >= available) {
                     alert("Cannot change to Killshot, player has no attempts available.");
-                    state.throws[round][team][player][throwIndex] = originalThrow; // Restore original
+                    state.throws[round][team][playerIndex][throwIndex] = originalThrow;
                     return;
                 }
             }
 
-            state.throws[round][team][player][throwIndex] = { score: newScore, type };
+            state.throws[round][team][playerIndex][throwIndex] = { score: newScore, type };
 
             state.editingThrow = null;
             editScoreModal.classList.add('hidden');
@@ -391,7 +436,9 @@
         function recalculateSeries() {
             state.roundWinners = [];
             for(let r=1; r <= state.currentRound; r++) {
-                 const roundComplete = state.throws[r] && state.throws[r][1][3].length === 10 && state.throws[r][2][3].length === 10;
+                 const roundComplete = state.roundMatchups[r]?.length === 3 && 
+                    state.throws[r][1][state.roundMatchups[r][2].team1].length === 10 &&
+                    state.throws[r][2][state.roundMatchups[r][2].team2].length === 10;
                  if(roundComplete) {
                     calculateRoundWinner(r);
                  }
@@ -407,17 +454,56 @@
             updateLog();
             updateLogHeaders();
             moveActiveLog();
+            updateLeadIndicator();
         }
 
-        function captureNames() {
+        function captureNamesAndRoster() {
             state.names.team1 = document.getElementById('team1-name-input').value || 'Team 1';
             state.names.team2 = document.getElementById('team2-name-input').value || 'Team 2';
-            for (let t=1; t<=2; t++) {
-                for (let p=1; p<=3; p++) {
-                    const pLetter = String.fromCharCode(96 + p);
-                    state.names.players[t][p] = document.getElementById(`p${t}${pLetter}-name-input`).value || `Player ${t}${String.fromCharCode(64 + p)}`;
-                }
-            }
+            state.roster[1] = Array.from(document.querySelectorAll('[name="team1-player"]')).map(input => input.value).filter(Boolean);
+            state.roster[2] = Array.from(document.querySelectorAll('[name="team2-player"]')).map(input => input.value).filter(Boolean);
+        }
+
+        function showMatchSetupModal() {
+            document.getElementById('match-setup-title').textContent = `Round ${state.currentRound}, Match ${state.currentMatchIndex + 1} Setup`;
+            document.getElementById('match-setup-team1-name').textContent = state.names.team1;
+            document.getElementById('match-setup-team2-name').textContent = state.names.team2;
+
+            const t1RosterEl = document.getElementById('team1-roster-select');
+            const t2RosterEl = document.getElementById('team2-roster-select');
+            t1RosterEl.innerHTML = '';
+            t2RosterEl.innerHTML = '';
+
+            state.roster[1].forEach((name, index) => {
+                t1RosterEl.innerHTML += `
+                    <div>
+                        <input type="radio" id="t1p${index}" name="team1-roster" value="${index}" class="hidden player-radio">
+                        <label for="t1p${index}" class="block w-full text-left p-3 rounded-md border border-gray-600 cursor-pointer">${name}</label>
+                    </div>`;
+            });
+            state.roster[2].forEach((name, index) => {
+                t2RosterEl.innerHTML += `
+                     <div>
+                        <input type="radio" id="t2p${index}" name="team2-roster" value="${index}" class="hidden player-radio">
+                        <label for="t2p${index}" class="block w-full text-left p-3 rounded-md border border-gray-600 cursor-pointer">${name}</label>
+                    </div>`;
+            });
+
+            validateMatchSelection();
+            matchSetupModal.classList.remove('hidden');
+        }
+
+        function validateMatchSelection() {
+            const t1Selected = document.querySelector('[name="team1-roster"]:checked');
+            const t2Selected = document.querySelector('[name="team2-roster"]:checked');
+            const startBtn = document.getElementById('start-match-btn');
+            startBtn.disabled = !(t1Selected && t2Selected);
+        }
+
+        function captureCurrentMatchup() {
+            const t1Index = parseInt(document.querySelector('[name="team1-roster"]:checked').value);
+            const t2Index = parseInt(document.querySelector('[name="team2-roster"]:checked').value);
+            state.roundMatchups[state.currentRound].push({ team1: t1Index, team2: t2Index });
         }
         
         function updateScores() {
@@ -431,14 +517,14 @@
             
             for (let r = 1; r <= 3; r++) {
                 if (r > state.currentRound && !state.gameOver) continue;
-                if (!state.throws[r]) continue;
+                if (!state.throws[r] || !state.roundMatchups[r] || state.roundMatchups[r].length === 0) continue;
 
                 let team1RoundTotal = 0;
                 let team2RoundTotal = 0;
-                for (let p = 1; p <= 3; p++) {
-                    team1RoundTotal += state.throws[r][1][p].reduce((total, t) => total + t.score, 0);
-                    team2RoundTotal += state.throws[r][2][p].reduce((total, t) => total + t.score, 0);
-                }
+                state.roundMatchups[r].forEach(matchup => {
+                    team1RoundTotal += state.throws[r][1][matchup.team1].reduce((total, t) => total + t.score, 0);
+                    team2RoundTotal += state.throws[r][2][matchup.team2].reduce((total, t) => total + t.score, 0);
+                });
                 
                 const roundComplete = state.roundWinners.length >= r;
                 let t1Color = 'text-gray-400';
@@ -465,7 +551,7 @@
         }
 
         function updateStatus() {
-            if (state.gameOver) {
+            if (state.gameOver || !state.roundMatchups[state.currentRound] || state.roundMatchups[state.currentRound].length <= state.currentMatchIndex) {
                 document.getElementById('match-status').textContent = 'Game Over';
                 document.getElementById('player-turn-status').textContent = 'Final Scores Calculated';
                 document.getElementById('throw-status').textContent = '';
@@ -473,15 +559,15 @@
                 return;
             }
             const team = state.currentPlayerInPair;
-            const playerIndex = state.currentMatchInRound;
-            const playerName = state.names.players[team][playerIndex];
+            const playerRosterIndex = state.roundMatchups[state.currentRound][state.currentMatchIndex][`team${team}`];
+            const playerName = state.roster[team][playerRosterIndex];
 
-            document.getElementById('match-status').textContent = `Round ${state.currentRound}, Match ${state.currentMatchInRound}`;
+            document.getElementById('match-status').textContent = `Round ${state.currentRound}, Match ${state.currentMatchIndex + 1}`;
             document.getElementById('player-turn-status').textContent = `${playerName}'s Turn`;
             document.getElementById('throw-status').textContent = `Throw ${state.throwInMatch} of 10`;
 
-            const used = getUsedKillshots(state.currentRound, team, playerIndex);
-            const available = getAvailableKillshots(state.currentRound, team, playerIndex);
+            const used = getUsedKillshots(state.currentRound, team, playerRosterIndex);
+            const available = getAvailableKillshots(state.currentRound, team, playerRosterIndex);
             document.getElementById('killshot-status').textContent = `Killshots: ${used} / ${available}`;
         }
 
@@ -502,7 +588,7 @@
 
         function updateKillshotButtons() {
             const controls = document.getElementById('scoring-controls');
-            if (state.gameOver) {
+            if (state.gameOver || !state.roundMatchups[state.currentRound] || state.roundMatchups[state.currentRound].length <= state.currentMatchIndex) {
                 controls.querySelectorAll('button').forEach(b => b.disabled = true);
                 controls.classList.add('opacity-50');
                 return;
@@ -512,9 +598,9 @@
 
             const round = state.currentRound;
             const team = state.currentPlayerInPair;
-            const player = state.currentMatchInRound;
-            const used = getUsedKillshots(round, team, player);
-            const available = getAvailableKillshots(round, team, player);
+            const playerIndex = state.roundMatchups[round][state.currentMatchIndex][`team${team}`];
+            const used = getUsedKillshots(round, team, playerIndex);
+            const available = getAvailableKillshots(round, team, playerIndex);
             
             const disabled = used >= available;
             document.getElementById('killshot-hit-btn').disabled = disabled;
@@ -541,27 +627,6 @@
                 roundContainer.innerHTML = `<h2 class="text-2xl font-bold text-center text-yellow-400 mb-4 border-b-2 border-yellow-400/50 pb-2">Round ${r}</h2>`;
                 const matchesContainer = document.createElement('div');
                 matchesContainer.className = 'space-y-6';
-
-                for (let m = 1; m <= 3; m++) {
-                    const p1Name = state.names.players[1][m];
-                    const p2Name = state.names.players[2][m];
-                    matchesContainer.innerHTML += `
-                        <div id="log-container-${r}-${m}" class="bg-gray-800 rounded-lg p-4">
-                            <div class="log-header flex justify-between items-center mb-4" data-log-id="${r}-${m}">
-                                <div>
-                                    <h3 class="text-xl font-bold">Match ${m} (${p1Name} vs ${p2Name})</h3>
-                                    <p id="match-total-${r}-${m}" class="text-sm text-gray-400 font-semibold"></p>
-                                </div>
-                                <button class="text-xs bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded self-start">Minimize</button>
-                            </div>
-                            <div class="log-content overflow-x-auto">
-                                <table class="w-full text-center">
-                                    <thead><tr class="border-b border-gray-600"><th class="py-2 px-1">Throw</th><th class="py-2 px-1 text-blue-400">${p1Name}</th><th class="py-2 px-1 text-red-400">${p2Name}</th></tr></thead>
-                                    <tbody id="log-body-${r}-${m}"></tbody>
-                                </table>
-                            </div>
-                        </div>`;
-                }
                 roundContainer.appendChild(matchesContainer);
                 logsContainer.appendChild(roundContainer);
             }
@@ -570,43 +635,67 @@
         function updateLog() {
             for (let r = 1; r <= 3; r++) {
                 const roundLogContainer = document.getElementById(`round-log-container-${r}`);
-                if (r <= state.currentRound || state.gameOver) {
-                    roundLogContainer.classList.remove('hidden');
-                } else {
+                const matchesContainer = roundLogContainer.querySelector('.space-y-6');
+                matchesContainer.innerHTML = '';
+                
+                const matchups = state.roundMatchups[r];
+                if (!matchups || matchups.length === 0) {
                     roundLogContainer.classList.add('hidden');
+                    continue;
                 }
+                roundLogContainer.classList.remove('hidden');
 
-                for (let m = 1; m <= 3; m++) {
-                    const logBody = document.getElementById(`log-body-${r}-${m}`);
-                    if (!logBody) continue;
-                    logBody.innerHTML = '';
+                for (let m = 0; m < matchups.length; m++) {
+                    const p1RosterIndex = matchups[m].team1;
+                    const p2RosterIndex = matchups[m].team2;
+                    const p1Name = state.roster[1][p1RosterIndex];
+                    const p2Name = state.roster[2][p2RosterIndex];
 
+                    let matchHTML = `
+                        <div id="log-container-${r}-${m}" class="bg-gray-800 rounded-lg p-4">
+                            <div class="log-header flex justify-between items-center mb-4" data-log-id="${r}-${m}">
+                                <div>
+                                    <h3 class="text-xl font-bold">Match ${m+1} (${p1Name} vs ${p2Name})</h3>
+                                    <p id="match-total-${r}-${m}" class="text-sm text-gray-400 font-semibold"></p>
+                                </div>
+                                <button class="text-xs bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded self-start">Minimize</button>
+                            </div>
+                            <div class="log-content overflow-x-auto">
+                                <table class="w-full text-center">
+                                    <thead><tr class="border-b border-gray-600"><th class="py-2 px-1">Throw</th><th class="py-2 px-1 text-blue-400">${p1Name}</th><th class="py-2 px-1 text-red-400">${p2Name}</th></tr></thead>
+                                    <tbody id="log-body-${r}-${m}">`;
+                    
                     for (let i = 0; i < 10; i++) {
-                        const row = document.createElement('tr');
-                        row.className = 'border-b border-gray-700 last:border-b-0 h-10';
-                        const p1Throw = state.throws[r][1][m][i];
-                        const p2Throw = state.throws[r][2][m][i];
-                        row.innerHTML = `
+                        const p1Throw = state.throws[r][1][p1RosterIndex][i];
+                        const p2Throw = state.throws[r][2][p2RosterIndex][i];
+                        matchHTML += `<tr class="border-b border-gray-700 last:border-b-0 h-10">
                             <td class="py-2 px-1 font-bold">${i + 1}</td>
-                            <td class="py-2 px-1 text-lg editable-score" data-round="${r}" data-team="1" data-player="${m}" data-throw-index="${i}">${formatScore(p1Throw)}</td>
-                            <td class="py-2 px-1 text-lg editable-score" data-round="${r}" data-team="2" data-player="${m}" data-throw-index="${i}">${formatScore(p2Throw)}</td>
-                        `;
-                        logBody.appendChild(row);
+                            <td class="py-2 px-1 text-lg editable-score" data-round="${r}" data-team="1" data-player-index="${p1RosterIndex}" data-throw-index="${i}">${formatScore(p1Throw)}</td>
+                            <td class="py-2 px-1 text-lg editable-score" data-round="${r}" data-team="2" data-player-index="${p2RosterIndex}" data-throw-index="${i}">${formatScore(p2Throw)}</td>
+                        </tr>`;
                     }
+                    
+                    matchHTML += `</tbody></table></div></div>`;
+                    matchesContainer.innerHTML += matchHTML;
                 }
             }
         }
         
         function updateLogHeaders() { 
             for (let r = 1; r <= 3; r++) {
-                for (let m = 1; m <= 3; m++) {
+                const matchups = state.roundMatchups[r];
+                if (!matchups) continue;
+                for (let m = 0; m < matchups.length; m++) {
                     const matchTotalEl = document.getElementById(`match-total-${r}-${m}`);
                     if(!matchTotalEl) continue;
+                    
+                    const p1RosterIndex = matchups[m].team1;
+                    const p2RosterIndex = matchups[m].team2;
 
-                    const p1Total = state.throws[r][1][m].reduce((total, t) => total + t.score, 0);
-                    const p2Total = state.throws[r][2][m].reduce((total, t) => total + t.score, 0);
+                    const p1Total = state.throws[r][1][p1RosterIndex].reduce((total, t) => total + t.score, 0);
+                    const p2Total = state.throws[r][2][p2RosterIndex].reduce((total, t) => total + t.score, 0);
 
-                    if (state.throws[r][1][m].length > 0 || state.throws[r][2][m].length > 0) {
+                    if (state.throws[r][1][p1RosterIndex].length > 0 || state.throws[r][2][p2RosterIndex].length > 0) {
                         matchTotalEl.textContent = `Match Total: ${p1Total} - ${p2Total}`;
                     } else {
                         matchTotalEl.textContent = '';
@@ -616,7 +705,6 @@
         }
 
         function moveActiveLog() {
-            // Return any logs from active container to main container
             Array.from(activeLogContainer.children).forEach(child => {
                 const [r, m] = child.id.split('-').slice(2);
                 document.querySelector(`#round-log-container-${r} > .space-y-6`).appendChild(child);
@@ -625,35 +713,65 @@
 
             if (state.gameOver) return;
 
-            // Move the current match log to the active container
             const round = state.currentRound;
-            const match = state.currentMatchInRound;
+            const match = state.currentMatchIndex;
             const activeLog = document.getElementById(`log-container-${round}-${match}`);
             if (activeLog) {
                 activeLogContainer.appendChild(activeLog);
             }
         }
 
+        function updateLeadIndicator() {
+            if (state.gameOver) {
+                leadIndicatorEl.textContent = '';
+                return;
+            }
+            const round = state.currentRound;
+            const matchups = state.roundMatchups[round];
+            if (!matchups || matchups.length === 0) {
+                leadIndicatorEl.textContent = '';
+                return;
+            }
+
+            let team1RoundTotal = 0;
+            let team2RoundTotal = 0;
+            matchups.forEach(matchup => {
+                team1RoundTotal += state.throws[round][1][matchup.team1].reduce((total, t) => total + t.score, 0);
+                team2RoundTotal += state.throws[round][2][matchup.team2].reduce((total, t) => total + t.score, 0);
+            });
+
+            if (team1RoundTotal > team2RoundTotal) {
+                leadIndicatorEl.textContent = `${state.names.team1} leads by ${team1RoundTotal - team2RoundTotal}`;
+                leadIndicatorEl.className = 'text-sm font-bold mt-2 h-5 text-blue-400';
+            } else if (team2RoundTotal > team1RoundTotal) {
+                leadIndicatorEl.textContent = `${state.names.team2} leads by ${team2RoundTotal - team1RoundTotal}`;
+                leadIndicatorEl.className = 'text-sm font-bold mt-2 h-5 text-red-400';
+            } else {
+                leadIndicatorEl.textContent = 'Round Tied';
+                leadIndicatorEl.className = 'text-sm font-bold mt-2 h-5 text-yellow-400';
+            }
+        }
+
         // --- Utility Functions ---
-        function getDrops(round, team, player) {
-            if (!state.throws[round] || !state.throws[round][team] || !state.throws[round][team][player]) return 0;
-            return state.throws[round][team][player].filter(t => t && (t.type === 'drop')).length;
+        function getDrops(round, team, playerIndex) {
+            if (!state.throws[round]?.[team]?.[playerIndex]) return 0;
+            return state.throws[round][team][playerIndex].filter(t => t && (t.type === 'drop')).length;
         }
 
-        function getAvailableKillshots(round, team, player) {
-            return 2 + getDrops(round, team, player);
+        function getAvailableKillshots(round, team, playerIndex) {
+            return 2 + getDrops(round, team, playerIndex);
         }
 
-        function getUsedKillshots(round, team, player) {
-            if (!state.throws[round] || !state.throws[round][team] || !state.throws[round][team][player]) return 0;
-            return state.throws[round][team][player].filter(t => t && (t.type === 'killshotHit' || t.type === 'killshotMiss' || t.type === 'killshotDrop')).length;
+        function getUsedKillshots(round, team, playerIndex) {
+            if (!state.throws[round]?.[team]?.[playerIndex]) return 0;
+            return state.throws[round][team][playerIndex].filter(t => t && (t.type === 'killshotHit' || t.type === 'killshotMiss' || t.type === 'killshotDrop')).length;
         }
 
         function calculateGrandTotal(teamNum) {
             let total = 0;
             for(let r=1; r<=3; r++){
                 if (!state.throws[r]) continue;
-                for (let p = 1; p <= 3; p++) {
+                for (let p = 0; p < state.roster[teamNum].length; p++) {
                     total += state.throws[r][teamNum][p].reduce((acc, t) => acc + t.score, 0);
                 }
             }
@@ -679,28 +797,30 @@
             csvContent.push(headers);
 
             for (let r = 1; r <= state.currentRound; r++) {
-                if (!state.throws[r]) continue;
-                for (let m = 1; m <= 3; m++) {
-                    // Team 1 Player's Row
-                    const p1Throws = state.throws[r][1][m];
+                const matchups = state.roundMatchups[r];
+                if (!matchups) continue;
+                
+                for (let m = 0; m < matchups.length; m++) {
+                    // Team 1 Player
+                    const p1RosterIndex = matchups[m].team1;
+                    const p1Name = state.roster[1][p1RosterIndex];
+                    const p1Throws = state.throws[r][1][p1RosterIndex];
                     if (p1Throws.length > 0) {
-                        const p1Name = state.names.players[1][m];
                         const t1Name = state.names.team1;
                         const p1Scores = p1Throws.map(t => t.score);
                         while (p1Scores.length < 10) { p1Scores.push(''); }
-                        const p1Row = [r, m, `"${p1Name}"`, `"${t1Name}"`, ...p1Scores];
-                        csvContent.push(p1Row);
+                        csvContent.push([r, m + 1, `"${p1Name}"`, `"${t1Name}"`, ...p1Scores]);
                     }
 
-                    // Team 2 Player's Row
-                    const p2Throws = state.throws[r][2][m];
-                    if (p2Throws.length > 0) {
-                        const p2Name = state.names.players[2][m];
+                    // Team 2 Player
+                    const p2RosterIndex = matchups[m].team2;
+                    const p2Name = state.roster[2][p2RosterIndex];
+                    const p2Throws = state.throws[r][2][p2RosterIndex];
+                     if (p2Throws.length > 0) {
                         const t2Name = state.names.team2;
                         const p2Scores = p2Throws.map(t => t.score);
                         while (p2Scores.length < 10) { p2Scores.push(''); }
-                        const p2Row = [r, m, `"${p2Name}"`, `"${t2Name}"`, ...p2Scores];
-                        csvContent.push(p2Row);
+                        csvContent.push([r, m + 1, `"${p2Name}"`, `"${t2Name}"`, ...p2Scores]);
                     }
                 }
             }
@@ -720,7 +840,8 @@
         }
 
         // --- Event Listeners ---
-        document.getElementById('start-game-btn').addEventListener('click', startGame);
+        document.getElementById('continue-setup-btn').addEventListener('click', setupGame);
+        document.getElementById('start-match-btn').addEventListener('click', startMatch);
         document.getElementById('reset-btn').addEventListener('click', resetGame);
         document.getElementById('play-again-btn').addEventListener('click', resetGame);
         document.getElementById('close-winner-btn').addEventListener('click', () => winnerModal.classList.add('hidden'));
@@ -756,8 +877,8 @@
         logsContainer.addEventListener('click', (e) => {
             const cell = e.target.closest('.editable-score');
             if (cell && cell.textContent !== '-') {
-                const { round, team, player, throwIndex } = cell.dataset;
-                openEditModal(parseInt(round), parseInt(team), parseInt(player), parseInt(throwIndex));
+                const { round, team, playerIndex, throwIndex } = cell.dataset;
+                openEditModal(parseInt(round), parseInt(team), parseInt(playerIndex), parseInt(throwIndex));
                 return;
             }
             
@@ -769,6 +890,8 @@
                 button.textContent = content.classList.contains('hidden') ? 'Expand' : 'Minimize';
             }
         });
+        
+        matchSetupModal.addEventListener('change', validateMatchSelection);
         
         // --- Initial Setup ---
         editScoringControls.innerHTML = scoringControls.innerHTML;
